@@ -1,0 +1,7 @@
+[submodule "picox_external/libfixmath"]
+	path = picox_external/libfixmath
+	url = https://github.com/maskedw/libfixmath.git
+	ignore = dirty
+[submodule "docs/wiki"]
+	path = docs/wiki
+	url = https://github.com/maskedw/picox.wiki.git

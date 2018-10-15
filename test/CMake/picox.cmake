@@ -1,0 +1,19 @@
+include_directories(
+    picox
+)
+set(picox_sources
+    picox/picox/core/detail/xdebug.c
+    picox/picox/core/detail/xdebug.c
+    picox/picox/core/detail/xstdio.c
+    picox/picox/core/detail/xstdlib.c
+    picox/picox/core/detail/xstream.c
+    picox/picox/core/detail/xstring.c
+    picox/picox/core/detail/xrandom.c
+    picox/picox/core/detail/xtime.c
+    picox/picox/core/detail/xutils.c
+    picox/picox/container/xintrusive_list.c
+    picox/picox/container/xfifo_buffer.c
+    picox/picox/allocator/xstack_allocator.c
+    picox/picox/allocator/xfixed_allocator.c
+    picox/picox/allocator/xpico_allocator.c
+)

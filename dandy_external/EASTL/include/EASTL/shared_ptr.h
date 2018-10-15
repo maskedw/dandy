@@ -3,20 +3,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// This class implements the C++11 shared_ptr template. A shared_ptr is like  
-// the C++ Standard Library unique_ptr except that it allows sharing of pointers 
-// between instances via reference counting. shared_ptr objects can safely be 
+// This class implements the C++11 shared_ptr template. A shared_ptr is like
+// the C++ Standard Library unique_ptr except that it allows sharing of pointers
+// between instances via reference counting. shared_ptr objects can safely be
 // copied and can  safely be used in containers such as vector or list.
 //
 // Notes regarding safe usage of shared_ptr:
 //     - http://www.boost.org/doc/libs/1_53_0/libs/smart_ptr/shared_ptr.htm#ThreadSafety
 //     - If you construct a shared_ptr with a raw pointer, you cannot construct another shared_ptr
-//       with just that raw pointer. Insted you need to construct additional shared_ptrs with 
+//       with just that raw pointer. Insted you need to construct additional shared_ptrs with
 //       the originally created shared_ptr. Otherwise you will get a crash.
-//     - Usage of shared_ptr is thread-safe, but what it points to isn't automatically thread safe. 
+//     - Usage of shared_ptr is thread-safe, but what it points to isn't automatically thread safe.
 //       Multiple shared_ptrs that refer to the same object can be used arbitrarily by multiple threads.
 //     - You can use a single shared_ptr between multiple threads in all ways except one: assigment
-//       to that shared_ptr. The following is not thread-safe, and needs to be guarded by a mutex 
+//       to that shared_ptr. The following is not thread-safe, and needs to be guarded by a mutex
 //       or the shared_ptr atomic functions:
 //           shared_ptr<Foo> pFoo;
 //           // Thread 1:
@@ -25,15 +25,15 @@
 //           pFoo = make_shared<Foo>();
 //
 // Compatibility note:
-// This version of shared_ptr updates the previous version to have full C++11 
-// compatibility. However, in order to add C++11 compatibility there needed to 
+// This version of shared_ptr updates the previous version to have full C++11
+// compatibility. However, in order to add C++11 compatibility there needed to
 // be a few breaking changes which may affect some users. It's likely that most
 // or all breaking changes can be rectified by doing the same thing in a slightly
 // different way. Here's a list of the primary signficant breaking changes:
 //     - shared_ptr now takes just one template parameter instead of three.
 //       (allocator and deleter). You now specify the allocator and deleter
 //       as part of the shared_ptr constructor at runtime.
-//     - shared_ptr has thread safety, which 
+//     - shared_ptr has thread safety, which
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -107,9 +107,9 @@ namespace eastl
 
 
 	#if EASTL_EXCEPTIONS_ENABLED
-		// We define eastl::bad_weak_ptr as opposed to std::bad_weak_ptr. The reason is that 
+		// We define eastl::bad_weak_ptr as opposed to std::bad_weak_ptr. The reason is that
 		// we can't easily know of std::bad_weak_ptr exists and we would have to #include <memory>
-		// to use it. EASTL "owns" the types that are defined in EASTL headers, and std::bad_weak_ptr 
+		// to use it. EASTL "owns" the types that are defined in EASTL headers, and std::bad_weak_ptr
 		// is declared in <memory>.
 
 		struct bad_weak_ptr : std::exception
@@ -150,7 +150,7 @@ namespace eastl
 	};
 
 
-	inline ref_count_sp::ref_count_sp(int refCount, int weakRefCount) EA_NOEXCEPT
+	inline ref_count_sp::ref_count_sp(int32_t refCount, int32_t weakRefCount) EA_NOEXCEPT
 		: mRefCount(refCount), mWeakRefCount(weakRefCount) {}
 
 	inline int32_t ref_count_sp::use_count() const EA_NOEXCEPT
@@ -372,9 +372,9 @@ namespace eastl
 
 	/// do_enable_shared_from_this
 	///
-	/// If a user calls this function, it sets up mWeakPtr member of 
-	/// the enable_shared_from_this parameter to point to the ref_count_sp 
-	/// object that's passed in. Normally, the user doesn't need to call 
+	/// If a user calls this function, it sets up mWeakPtr member of
+	/// the enable_shared_from_this parameter to point to the ref_count_sp
+	/// object that's passed in. Normally, the user doesn't need to call
 	/// this function, as the shared_ptr constructor will do it for them.
 	///
 	template <typename T, typename U>
@@ -393,7 +393,7 @@ namespace eastl
 	/// This exists for the sole purpose of creating a typedef called
 	/// reference_type which is specialized for type void. The reason
 	/// for this is that shared_ptr::operator*() returns a reference
-	/// to T but if T is void, it needs to return void, not *void, 
+	/// to T but if T is void, it needs to return void, not *void,
 	/// as the latter is not valid C++.
 	template <typename T> struct shared_ptr_traits
 		{ typedef T& reference_type; };
@@ -420,13 +420,13 @@ namespace eastl
 	/// can safely be used in C++ Standard Library containers such as std::vector or
 	/// std::list.
 	///
-	/// This class is not thread safe in that you cannot use an instance of it from 
-	/// two threads at the same time and cannot use two separate instances of it, which 
+	/// This class is not thread safe in that you cannot use an instance of it from
+	/// two threads at the same time and cannot use two separate instances of it, which
 	/// own the same pointer, at the same time. Use standard multithread mutex techniques
 	/// to address the former problems and use shared_ptr_mt to address the latter.
 	/// Note that this is contrary to the C++11 standard.
 	///
-	/// As of this writing, arrays aren't supported, but they are planned in the future 
+	/// As of this writing, arrays aren't supported, but they are planned in the future
 	/// based on the C++17 proposal: http://isocpp.org/files/papers/N3920.html
 	///
 	template <typename T>
@@ -434,7 +434,7 @@ namespace eastl
 	{
 	public:
 		typedef shared_ptr<T>                                    this_type;
-		typedef T                                                element_type; 
+		typedef T                                                element_type;
 		typedef typename shared_ptr_traits<T>::reference_type    reference_type;   // This defines what a reference to a T is. It's always simply T&, except for the case where T is void, whereby the reference is also just void.
 		typedef EASTLAllocatorType                               default_allocator_type;
 		typedef default_delete<T>                                default_deleter_type;
@@ -457,7 +457,7 @@ namespace eastl
 		/// to the pointer to 1. It is OK if the input pointer is null.
 		/// The shared reference count is allocated on the heap using the
 		/// default eastl allocator.
-		/// Throws: bad_alloc, or an implementation-defined exception when 
+		/// Throws: bad_alloc, or an implementation-defined exception when
 		///         a resource other than memory could not be obtained.
 		/// Exception safety: If an exception is thrown, delete p is called.
 		/// Postcondition in the event of no exception: use_count() == 1 && get() == p
@@ -484,7 +484,7 @@ namespace eastl
 		/// The shared reference count is allocated on the heap using the
 		/// default eastl allocator. The pointer will be disposed using the
 		/// provided deleter.
-		/// If an exception occurs during the allocation of the shared 
+		/// If an exception occurs during the allocation of the shared
 		/// reference count, the owned pointer is deleted and the exception
 		/// is rethrown.
 		/// Postcondition: use_count() == 1 && get() == p
@@ -511,7 +511,7 @@ namespace eastl
 		/// The shared reference count is allocated on the heap using the
 		/// supplied allocator. The pointer will be disposed using the
 		/// provided deleter.
-		/// If an exception occurs during the allocation of the shared 
+		/// If an exception occurs during the allocation of the shared
 		/// reference count, the owned pointer is deleted and the exception
 		/// is rethrown.
 		/// Postcondition: use_count() == 1 && get() == p
@@ -535,7 +535,7 @@ namespace eastl
 		/// shared_ptr
 		/// construction with self type.
 		/// If we want a shared_ptr constructor that is templated on shared_ptr<U>,
-		/// then we need to make it in addition to this function, as otherwise 
+		/// then we need to make it in addition to this function, as otherwise
 		/// the compiler will generate this function and things will go wrong.
 		/// To accomplish this in a thread-safe way requires use of shared_ptr atomic_store.
 		shared_ptr(const shared_ptr& sharedPtr) EA_NOEXCEPT
@@ -562,16 +562,16 @@ namespace eastl
 
 
 		/// shared_ptr
-		/// 
+		///
 		/// 20.7.2.2.1p13: Constructs a shared_ptr instance that stores p and shares ownership with r.
 		/// Postconditions: get() == pValue && use_count() == sharedPtr.use_count().
-		/// To avoid the possibility of a dangling pointer, the user of this constructor must 
-		/// ensure that pValue remains valid at least until the ownership group of sharedPtr is destroyed. 
-		/// This constructor allows creation of an empty shared_ptr instance with a non-NULL stored pointer. 
+		/// To avoid the possibility of a dangling pointer, the user of this constructor must
+		/// ensure that pValue remains valid at least until the ownership group of sharedPtr is destroyed.
+		/// This constructor allows creation of an empty shared_ptr instance with a non-NULL stored pointer.
 		///
-		/// Shares ownership of a pointer with another instance of shared_ptr while storing a potentially 
+		/// Shares ownership of a pointer with another instance of shared_ptr while storing a potentially
 		/// different pointer. This function increments the shared reference count on the sharedPtr if it exists.
-		/// If sharedPtr has no shared reference then a shared reference is not created an pValue is not 
+		/// If sharedPtr has no shared reference then a shared reference is not created an pValue is not
 		/// deleted in our destructor and effectively the pointer is not actually shared.
 		///
 		/// To accomplish this in a thread-safe way requires the user to maintain the lifetime of sharedPtr
@@ -684,7 +684,7 @@ namespace eastl
 
 
 		/// ~shared_ptr
-		/// Decrements the reference count for the owned pointer. If the 
+		/// Decrements the reference count for the owned pointer. If the
 		/// reference count goes to zero, the owned pointer is deleted and
 		/// the shared reference count is deleted.
 		~shared_ptr()
@@ -700,7 +700,7 @@ namespace eastl
 		}
 
 
-		// The following is disabled because it is not specified by the C++11 Standard, as it leads to 
+		// The following is disabled because it is not specified by the C++11 Standard, as it leads to
 		// potential collisions. Use the reset(p) and reset() functions instead.
 		//
 		// template <typename U>
@@ -722,7 +722,7 @@ namespace eastl
 		/// operator=
 		/// Assignment to self type.
 		/// If we want a shared_ptr operator= that is templated on shared_ptr<U>,
-		/// then we need to make it in addition to this function, as otherwise 
+		/// then we need to make it in addition to this function, as otherwise
 		/// the compiler will generate this function and things will go wrong.
 		shared_ptr& operator=(const shared_ptr& sharedPtr) EA_NOEXCEPT
 		{
@@ -738,7 +738,7 @@ namespace eastl
 		/// may already own a shared pointer with another different pointer
 		/// (but still of the same type) before this call. In that case,
 		/// this function releases the old pointer, decrementing its reference
-		/// count and deleting it if zero, takes shared ownership of the new 
+		/// count and deleting it if zero, takes shared ownership of the new
 		/// pointer and increments its reference count.
 		template <typename U>
 		typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
@@ -754,7 +754,7 @@ namespace eastl
 			/// operator=
 			/// Assignment to self type.
 			/// If we want a shared_ptr operator= that is templated on shared_ptr<U>,
-			/// then we need to make it in addition to this function, as otherwise 
+			/// then we need to make it in addition to this function, as otherwise
 			/// the compiler will generate this function and things will go wrong.
 			this_type& operator=(shared_ptr&& sharedPtr) EA_NOEXCEPT
 			{
@@ -770,7 +770,7 @@ namespace eastl
 			/// may already own a shared pointer with another different pointer
 			/// (but still of the same type) before this call. In that case,
 			/// this function releases the old pointer, decrementing its reference
-			/// count and deleting it if zero, takes shared ownership of the new 
+			/// count and deleting it if zero, takes shared ownership of the new
 			/// pointer and increments its reference count.
 			template <typename U>
 			typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
@@ -820,7 +820,7 @@ namespace eastl
 
 
 		/// reset
-		/// Releases the owned pointer and takes ownership of the 
+		/// Releases the owned pointer and takes ownership of the
 		/// passed in pointer.
 		template <typename U>
 		typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, void>::type
@@ -831,7 +831,7 @@ namespace eastl
 
 
 		/// reset
-		/// Releases the owned pointer and takes ownership of the 
+		/// Releases the owned pointer and takes ownership of the
 		/// passed in pointer.
 		template <typename U, typename Deleter>
 		typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, void>::type
@@ -879,7 +879,7 @@ namespace eastl
 		/// operator->
 		/// Allows access to the owned pointer via operator->()
 		/// Example usage:
-		///    struct X{ void DoSomething(); }; 
+		///    struct X{ void DoSomething(); };
 		///    shared_ptr<int> ptr(new X);
 		///    ptr->DoSomething();
 		element_type* operator->() const EA_NOEXCEPT
@@ -889,11 +889,11 @@ namespace eastl
 		}
 
 		/// get
-		/// Returns the owned pointer. Note that this class does 
+		/// Returns the owned pointer. Note that this class does
 		/// not provide an operator T() function. This is because such
 		/// a thing (automatic conversion) is deemed unsafe.
 		/// Example usage:
-		///    struct X{ void DoSomething(); }; 
+		///    struct X{ void DoSomething(); };
 		///    shared_ptr<int> ptr(new X);
 		///    X* pX = ptr.get();
 		///    pX->DoSomething();
@@ -965,7 +965,7 @@ namespace eastl
 			}
 		#else
 			/// Explicit operator bool
-			/// Allows for using a shared_ptr as a boolean. 
+			/// Allows for using a shared_ptr as a boolean.
 			/// Example usage:
 			///    shared_ptr<int> ptr(new int(3));
 			///    if(ptr)
@@ -980,9 +980,9 @@ namespace eastl
 		template <typename U>
 		bool equivalent_ownership(const shared_ptr<U>& sharedPtr) const
 		{
-			// We compare mpRefCount instead of mpValue, because it's feasible that there are two sets of shared_ptr 
-			// objects that are unconnected to each other but happen to own the same value pointer. 
-			return (mpRefCount == sharedPtr.mpRefCount); 
+			// We compare mpRefCount instead of mpValue, because it's feasible that there are two sets of shared_ptr
+			// objects that are unconnected to each other but happen to own the same value pointer.
+			return (mpRefCount == sharedPtr.mpRefCount);
 		}
 
 	protected:
@@ -1002,7 +1002,7 @@ namespace eastl
 				try
 				{
 					void* const pMemory = EASTLAlloc(allocator, sizeof(ref_count_type));
-					if(!pMemory) 
+					if(!pMemory)
 						throw std::bad_alloc();
 					mpRefCount = ::new(pMemory) ref_count_type(pValue, eastl::move(deleter), eastl::move(allocator));
 					mpValue = pValue;
@@ -1032,7 +1032,7 @@ namespace eastl
 
 
 	/// get_pointer
-	/// returns shared_ptr::get() via the input shared_ptr. 
+	/// returns shared_ptr::get() via the input shared_ptr.
 	template <typename T>
 	inline typename shared_ptr<T>::element_type* get_pointer(const shared_ptr<T>& sharedPtr) EA_NOEXCEPT
 	{
@@ -1059,21 +1059,21 @@ namespace eastl
 
 
 	/// shared_ptr comparison operators
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator==(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		// assert((a.get() != b.get()) || (a.use_count() == b.use_count()));
 		return (a.get() == b.get());
 	}
 
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator!=(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		// assert((a.get() != b.get()) || (a.use_count() == b.use_count()));
 		return (a.get() != b.get());
 	}
 
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator<(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		//typedef typename eastl::common_type<T*, U*>::type CPointer;
@@ -1085,19 +1085,19 @@ namespace eastl
 		return less<CPointer>()(pT, pU);                            // It looks like common_type is making CPointer be (e.g.) int*&& instead of int*, though the problem may be in how less<> deals with that.
 	}
 
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator>(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		return (b < a);
 	}
 
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator<=(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		return !(b < a);
 	}
 
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline bool operator>=(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
 		return !(a < b);
@@ -1186,7 +1186,7 @@ namespace eastl
 	/// Requires: The expression reinterpret_cast<T*>(sharedPtr.get()) shall be well formed.
 	/// Returns: If sharedPtr is empty, an empty shared_ptr<T>; otherwise, a shared_ptr<T>
 	///          object that stores const_cast<T*>(sharedPtr.get()) and shares ownership with sharedPtr.
-	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(), 
+	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(),
 	///                 where w is the return value.
 	template <typename T, typename U>
 	inline shared_ptr<T> reinterpret_pointer_cast(shared_ptr<U> const& sharedPtr) EA_NOEXCEPT
@@ -1200,11 +1200,11 @@ namespace eastl
 	/// Returns a shared_ptr<T> static-casted from a shared_ptr<U>&.
 	///
 	/// Requires: The expression const_cast<T*>(sharedPtr.get()) shall be well formed.
-	/// Returns: If sharedPtr is empty, an empty shared_ptr<T>; otherwise, a shared_ptr<T> 
+	/// Returns: If sharedPtr is empty, an empty shared_ptr<T>; otherwise, a shared_ptr<T>
 	/// object that stores const_cast<T*>(sharedPtr.get()) and shares ownership with sharedPtr.
-	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(), 
+	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(),
 	///                 where w is the return value.
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline shared_ptr<T> static_pointer_cast(const shared_ptr<U>& sharedPtr) EA_NOEXCEPT
 	{
 		return shared_ptr<T>(sharedPtr, static_cast<T*>(sharedPtr.get()));
@@ -1224,9 +1224,9 @@ namespace eastl
 	/// Requires: The expression const_cast<T*>(sharedPtr.get()) shall be well formed.
 	/// Returns: If sharedPtr is empty, an empty shared_ptr<T>; otherwise, a shared_ptr<T>
 	///          object that stores const_cast<T*>(sharedPtr.get()) and shares ownership with sharedPtr.
-	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(), 
+	/// Postconditions: w.get() == const_cast<T*>(sharedPtr.get()) and w.use_count() == sharedPtr.use_count(),
 	///                 where w is the return value.
-	template <typename T, typename U> 
+	template <typename T, typename U>
 	inline shared_ptr<T> const_pointer_cast(const shared_ptr<U>& sharedPtr) EA_NOEXCEPT
 	{
 		return shared_ptr<T>(sharedPtr, const_cast<T*>(sharedPtr.get()));
@@ -1240,14 +1240,14 @@ namespace eastl
 
 	#if EASTL_RTTI_ENABLED
 		/// dynamic_pointer_cast
-		/// 
+		///
 		/// Returns a shared_ptr<T> dynamic-casted from a const shared_ptr<U>&.
-		/// 
+		///
 		/// Requires: The expression dynamic_cast<T*>(sharedPtr.get()) shall be well formed and shall have well defined behavior.
-		/// Returns: When dynamic_cast<T*>(sharedPtr.get()) returns a nonzero value, a shared_ptr<T> object that stores 
+		/// Returns: When dynamic_cast<T*>(sharedPtr.get()) returns a nonzero value, a shared_ptr<T> object that stores
 		///          a copy of it and shares ownership with sharedPtr; Otherwise, an empty shared_ptr<T> object.
 		/// Postcondition: w.get() == dynamic_cast<T*>(sharedPtr.get()), where w is the return value
-		/// 
+		///
 		template <typename T, typename U>
 		inline shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U>& sharedPtr) EA_NOEXCEPT
 		{
@@ -1264,11 +1264,11 @@ namespace eastl
 
 
 	/// hash specialization for shared_ptr.
-	/// It simply returns eastl::hash(x.get()). If your unique_ptr pointer type (the return value of shared_ptr<T>::get) is 
+	/// It simply returns eastl::hash(x.get()). If your unique_ptr pointer type (the return value of shared_ptr<T>::get) is
 	/// a custom type and not a built-in pointer type then you will need to independently define eastl::hash for that type.
-	template <typename T> 
+	template <typename T>
 	struct hash< shared_ptr<T> >
-	{ 
+	{
 		size_t operator()(const shared_ptr<T>& x) const EA_NOEXCEPT
 			{ return eastl::hash<T*>()(x.get()); }
 	};
@@ -1500,7 +1500,7 @@ namespace eastl
 	// functions for regular thread-safe direct usage of shared_ptr construction
 	// and copying, as it's intrinsically thread-safe for that already.
 	//
-	// That being said, the following is not thread-safe and needs to be guarded by 
+	// That being said, the following is not thread-safe and needs to be guarded by
 	// a mutex or the following atomic functions, as it's assigning the *same*
 	// shared_ptr object from multiple threads as opposed to different shared_ptr
 	// objects underlying object:
@@ -1515,8 +1515,8 @@ namespace eastl
 	inline bool atomic_is_lock_free(const shared_ptr<T>*)
 	{
 		// Return true if atomic access to the provided shared_ptr instance is lock-free, false otherwise.
-		// For this to be lock-free, we would have to be able to copy shared_ptr objects in an atomic way 
-		// as opposed to wrapping it with a mutex like we do below. Given the nature of shared_ptr, it's 
+		// For this to be lock-free, we would have to be able to copy shared_ptr objects in an atomic way
+		// as opposed to wrapping it with a mutex like we do below. Given the nature of shared_ptr, it's
 		// probably not feasible to implement these operations without a mutex. atomic_is_lock_free exists
 		// in the C++11 Standard because it also applies to other types such as built-in types which can
 		// be lock-free in their access.
@@ -1529,7 +1529,7 @@ namespace eastl
 		Internal::shared_ptr_auto_mutex autoMutex(pSharedPtr);
 		return *pSharedPtr;
 	}
-  
+
 	template <typename T>
 	inline shared_ptr<T> atomic_load_explicit(const shared_ptr<T>* pSharedPtr, ... /*std::memory_order memoryOrder*/)
 	{
@@ -1556,16 +1556,16 @@ namespace eastl
 		pSharedPtrA->swap(sharedPtrB);
 		return sharedPtrB;
 	}
-  
+
 	template <typename T>
 	inline shared_ptr<T> atomic_exchange_explicit(shared_ptr<T>* pSharedPtrA, shared_ptr<T> sharedPtrB, ... /*std::memory_order memoryOrder*/)
 	{
 		atomic_exchange(pSharedPtrA, sharedPtrB);
 	}
 
-	// Compares the shared pointers pointed-to by p and expected. If they are equivalent (share ownership of the 
-	// same pointer and refer to the same pointer), assigns sharedPtrNew into *pSharedPtr using the memory ordering constraints 
-	// specified by success and returns true. If they are not equivalent, assigns *pSharedPtr into *pSharedPtrCondition using the 
+	// Compares the shared pointers pointed-to by p and expected. If they are equivalent (share ownership of the
+	// same pointer and refer to the same pointer), assigns sharedPtrNew into *pSharedPtr using the memory ordering constraints
+	// specified by success and returns true. If they are not equivalent, assigns *pSharedPtr into *pSharedPtrCondition using the
 	// memory ordering constraints specified by failure and returns false.
 	template <typename T>
 	bool atomic_compare_exchange_strong(shared_ptr<T>* pSharedPtr, shared_ptr<T>* pSharedPtrCondition, shared_ptr<T> sharedPtrNew)
@@ -1625,11 +1625,11 @@ namespace eastl
 
 	/// weak_ptr
 	///
-	/// The weak_ptr class template stores a "weak reference" to an object 
-	/// that's already managed by a shared_ptr. To access the object, a weak_ptr 
-	/// can be converted to a shared_ptr using the shared_ptr constructor or 
-	/// the lock() member function. When the last shared_ptr to the object goes 
-	/// away and the object is deleted, the attempt to obtain a shared_ptr 
+	/// The weak_ptr class template stores a "weak reference" to an object
+	/// that's already managed by a shared_ptr. To access the object, a weak_ptr
+	/// can be converted to a shared_ptr using the shared_ptr constructor or
+	/// the lock() member function. When the last shared_ptr to the object goes
+	/// away and the object is deleted, the attempt to obtain a shared_ptr
 	/// from the weak_ptr instances that refer to the deleted object will fail via
 	/// lock() returning an empty shared_ptr.
 	///
@@ -1827,7 +1827,7 @@ namespace eastl
 
 		/// assign
 		///
-		/// Assignment via another weak_ptr. 
+		/// Assignment via another weak_ptr.
 		///
 		template <typename U>
 		void assign(const weak_ptr<U>& weakPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
@@ -1874,7 +1874,7 @@ namespace eastl
 
 		/// assign
 		///
-		/// Assignment through a T/ref_count_sp pair. This is used by 
+		/// Assignment through a T/ref_count_sp pair. This is used by
 		/// external utility functions.
 		///
 		void assign(element_type* pValue, ref_count_sp* pRefCount)
@@ -1932,7 +1932,7 @@ namespace eastl
 	// in algorithms and containers that use strict weak ordering, such as map.
 	///////////////////////////////////////////////////////////////////////////
 
-	template <typename T> 
+	template <typename T>
 	struct owner_less;
 
 	template <typename T>

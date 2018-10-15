@@ -10,6 +10,7 @@
 #include <EASTL/internal/config.h>
 #include <EABase/nullptr.h>
 #include <stddef.h>
+#include <dandy/core/DCore.hpp>
 
 
 #ifdef _MSC_VER
@@ -30,7 +31,7 @@ namespace eastl
 	///
 	/// Defines allocation flags.
 	///
-	enum alloc_flags 
+	enum alloc_flags
 	{
 		MEM_TEMP = 0, // Low memory, not necessarily actually temporary.
 		MEM_PERM = 1  // High memory, for things that won't be unloaded.
@@ -42,14 +43,14 @@ namespace eastl
 	/// In this allocator class, note that it is not templated on any type and
 	/// instead it simply allocates blocks of memory much like the C malloc and
 	/// free functions. It can be thought of as similar to C++ std::allocator<char>.
-	/// The flags parameter has meaning that is specific to the allocation 
+	/// The flags parameter has meaning that is specific to the allocation
 	///
-	/// C++11's std::allocator (20.6.9) doesn't have a move constructor or assignment 
+	/// C++11's std::allocator (20.6.9) doesn't have a move constructor or assignment
 	/// operator. This is possibly because std::allocators are associated with types
 	/// instead of as instances. The potential non-equivalance of C++ std::allocator
 	/// instances has been a source of some acknowledged design problems.
 	/// We don't implement support for move construction or assignment in eastl::allocator,
-	/// but users can define their own allocators which do have move functions and 
+	/// but users can define their own allocators which do have move functions and
 	/// the eastl containers are compatible with such allocators (i.e. nothing unexpected
 	/// will happen).
 	///
@@ -120,16 +121,16 @@ namespace eastl
 	///
 	/// This templated function allows the user to implement a default allocator
 	/// retrieval function that any part of EASTL can use. EASTL containers take
-	/// an Allocator parameter which identifies an Allocator class to use. But 
-	/// different kinds of allocators have different mechanisms for retrieving 
+	/// an Allocator parameter which identifies an Allocator class to use. But
+	/// different kinds of allocators have different mechanisms for retrieving
 	/// a default allocator instance, and some don't even intrinsically support
-	/// such functionality. The user can override this get_default_allocator 
+	/// such functionality. The user can override this get_default_allocator
 	/// function in order to provide the glue between EASTL and whatever their
 	/// system's default allocator happens to be.
 	///
 	/// Example usage:
 	///     MyAllocatorType* gpSystemAllocator;
-	///     
+	///
 	///     MyAllocatorType* get_default_allocator(const MyAllocatorType*)
 	///         { return gpSystemAllocator; }
 	///
@@ -239,6 +240,10 @@ namespace eastl
 
 		inline void* allocator::allocate(size_t n, int flags)
 		{
+            X_ASSERT(flags == 0); /* flagsの指定は未対応 */
+
+            return D_NEW(char[n]);
+#if 0
 			#if EASTL_NAME_ENABLED
 				#define pName mpName
 			#else
@@ -254,14 +259,21 @@ namespace eastl
 			#else
 				return ::new(   pName, flags, 0, __FILE__, __LINE__) char[n];
 			#endif
+#endif
 		}
 
 
 		inline void* allocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
 		{
+            X_ASSERT(alignment <= D_ALIGNMENT_OF(DMaxAlign));
+            X_ASSERT(offset == 0);
+            X_ASSERT(flags == 0);
+
+            return D_NEW(char[n]);
+#if 0
 			#if EASTL_DLL
-				// We currently have no support for implementing flags when 
-				// using the C runtime library operator new function. The user 
+				// We currently have no support for implementing flags when
+				// using the C runtime library operator new function. The user
 				// can use SetDefaultAllocator to override the default allocator.
 				EA_UNUSED(offset); EA_UNUSED(flags);
 
@@ -287,11 +299,14 @@ namespace eastl
 			#endif
 
 			#undef pName  // See above for the definition of this.
+#endif
 		}
 
 
 		inline void allocator::deallocate(void* p, size_t)
 		{
+            D_DELETE_ARRAY((char*)p);
+#if 0
 			#if EASTL_DLL
 				if (p != nullptr)
 				{
@@ -301,6 +316,7 @@ namespace eastl
 			#else
 				delete[](char*)p;
 			#endif
+#endif
 		}
 
 

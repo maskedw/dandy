@@ -73,6 +73,8 @@
 #define INCLUDED_eaplatform_H
 
 
+// #define EA_PLATFORM_ANDROID
+
 // Cygwin
 // This is a pseudo-platform which will be defined along with EA_PLATFORM_LINUX when
 // using the Cygwin build environment.
@@ -444,18 +446,35 @@
 
 	// EA_PLATFORM_WINRT
 	// This is a subset of Windows which is used for tablets and the "Metro" (restricted) Windows user interface.
-	// WinRT doesn't doesn't have access to the Windows "desktop" API, but WinRT can nevertheless run on 
+	// WinRT doesn't doesn't have access to the Windows "desktop" API, but WinRT can nevertheless run on
 	// desktop computers in addition to tablets. The Windows Phone API is a subset of WinRT and is not included
 	// in it due to it being only a part of the API.
 	#if (defined(EA_PLATFORM_WINDOWS) && !EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP))
-		#define EA_PLATFORM_WINRT 1 
+		#define EA_PLATFORM_WINRT 1
 	#endif
 
-// Sun (Solaris)
-// __SUNPRO_CC is defined by the Sun compiler.
-// __sun is defined by the GCC compiler.
-// __i386 is defined by the Sun and GCC compilers.
-// __sparc is defined by the Sun and GCC compilers.
+#elif (defined(D_PLATFORM_MBED))
+
+    #if defined(__arm__)
+        #define EA_PROCESSOR_ARM32 1
+        #define EA_SYSTEM_LITTLE_ENDIAN 1
+        #define EA_PLATFORM_DESCRIPTION "Mbed on ARM"
+    #elif defined(__aarch64__) || defined(__AARCH64)
+        #define EA_PROCESSOR_ARM64 1
+        #define EA_SYSTEM_LITTLE_ENDIAN 1
+        #define EA_PLATFORM_DESCRIPTION "Mbed on ARM64"
+    #elif defined(__i386__)
+        #define EA_PROCESSOR_X86 1
+        #define EA_SYSTEM_LITTLE_ENDIAN 1
+        #define EA_PLATFORM_DESCRIPTION "Mbed on x86"
+    #elif defined(__x86_64) || defined(__amd64)
+        #define EA_PROCESSOR_X86_64 1
+        #define EA_SYSTEM_LITTLE_ENDIAN 1
+        #define EA_PLATFORM_DESCRIPTION "Mbed on x64"
+    #else
+        #error Unknown processor
+    #endif
+
 #else
 	#error Unknown platform
 	#error Unknown processor
@@ -513,7 +532,7 @@
 #endif
 
 // EA_PLATFORM_MIN_MALLOC_ALIGNMENT
-// This defines the minimal alignment that the platform's malloc 
+// This defines the minimal alignment that the platform's malloc
 // implementation will return. This should be used when writing custom
 // allocators to ensure that the alignment matches that of malloc
 #ifndef EA_PLATFORM_MIN_MALLOC_ALIGNMENT
@@ -551,12 +570,12 @@
 // This the expected best guess values for the targets that we can make at compilation time.
 
 #ifndef EA_CACHE_LINE_SIZE
-	#if   defined(EA_PROCESSOR_X86)      
+	#if   defined(EA_PROCESSOR_X86)
 		#define EA_CACHE_LINE_SIZE 32    // This is the minimum possible value.
-	#elif defined(EA_PROCESSOR_X86_64)  
+	#elif defined(EA_PROCESSOR_X86_64)
 		#define EA_CACHE_LINE_SIZE 64    // This is the minimum possible value
 	#elif defined(EA_PROCESSOR_ARM32)
-		#define EA_CACHE_LINE_SIZE 32    // This varies between implementations and is usually 32 or 64. 
+		#define EA_CACHE_LINE_SIZE 32    // This varies between implementations and is usually 32 or 64.
 	#elif defined(EA_PROCESSOR_ARM64)
 		#define EA_CACHE_LINE_SIZE 64    // Cache line Cortex-A8  (64 bytes) http://shervinemami.info/armAssembly.html however this remains to be mostly an assumption at this stage
 	#elif (EA_PLATFORM_WORD_SIZE == 4)

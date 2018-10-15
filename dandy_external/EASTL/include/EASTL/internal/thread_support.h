@@ -27,6 +27,8 @@
 	// Cannot include Windows headers in our headers, as they kill builds with their #defines.
 #elif defined(EA_PLATFORM_POSIX)
 	#include <pthread.h>
+#elif defined(D_PLATFORM_MBED)
+	#include <mbed.h>
 #endif
 
 
@@ -37,7 +39,7 @@
 	#pragma warning(disable: 4275) // non dll-interface class used as base for DLL-interface classkey 'identifier'.
 #endif
 
-	
+
 #if defined(EA_PLATFORM_MICROSOFT)
 	#if defined(EA_PROCESSOR_POWERPC)
 		extern "C" long  __stdcall _InterlockedIncrement(long volatile* Addend);
@@ -67,7 +69,7 @@
 //
 // Defined as 0 or 1, based on existing support.
 // Identifies if thread support (e.g. atomics, mutexes) is available for use.
-// The large majority of EASTL doesn't use thread support, but a few parts 
+// The large majority of EASTL doesn't use thread support, but a few parts
 // of it (e.g. shared_ptr) do.
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -145,16 +147,16 @@ namespace eastl
 			#elif defined(EA_COMPILER_MSVC)
 				return ((int32_t)_InterlockedCompareExchange((volatile long*)p32, (long)newValue, (long)condition) == condition);
 			#elif defined(EA_COMPILER_GNUC)
-				// GCC Inline ASM Constraints     
-				// r  <--> Any general purpose register  
-				// a  <--> The a register.  
+				// GCC Inline ASM Constraints
+				// r  <--> Any general purpose register
+				// a  <--> The a register.
 				// 1  <--> The constraint '1' for operand 2 says that it must occupy the same location as operand 1.
-				// =a <--> output registers 
-				// =r <--> output registers 
+				// =a <--> output registers
+				// =r <--> output registers
 
 				int32_t result;
 				__asm__ __volatile__(
-					"lock; cmpxchgl %3, (%1) \n"                    // Test *p32 against EAX, if same, then *p32 = newValue 
+					"lock; cmpxchgl %3, (%1) \n"                    // Test *p32 against EAX, if same, then *p32 = newValue
 					: "=a" (result), "=r" (p32)                     // outputs
 					: "a" (condition), "r" (newValue), "1" (p32)    // inputs
 					: "memory"                                      // clobbered
@@ -175,6 +177,8 @@ namespace eastl
 		// mutex
 		#if EASTL_CPP11_MUTEX_ENABLED
 			using std::mutex;
+		#elif defined(D_PLATFORM_MBED)
+			class mutex: public Mutex {};
 		#else
 			class EASTL_API mutex
 			{

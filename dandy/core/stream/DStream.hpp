@@ -65,6 +65,7 @@ public:
     int printf(const char *format, ...) X_PRINTF_ATTR(2, 3);
     int vprintf(const char *format, std::va_list args);
     char* gets(char* dst, size_t size, bool* overflow);
+    std::string getline(size_t maxLineSize = 1024);
 
 private:
     D_DISALLOW_COPY_AND_ASSIGN(DStream);

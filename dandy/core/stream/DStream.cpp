@@ -82,6 +82,24 @@ char* DStream::gets(char* dst, size_t size, bool* overflow)
     return (error == 0) && line ? dst : nullptr;
 }
 
+
+std::string DStream::getline(size_t maxLineSize)
+{
+    char* p = D_NEW(char[maxLineSize]);
+    X_ASSERT(p);
+
+    if (!this->gets(p, maxLineSize, nullptr))
+    {
+        D_DELETE_ARRAY(p);
+        return std::string();
+    }
+
+    const std::string result(p);
+    D_DELETE_ARRAY(p);
+
+    return result;
+}
+
 static int D__WriteStream(void* self, const void* src, size_t size, size_t* nwritten)
 {
     const ssize_t ret = static_cast<DStream*>(self)->write(src, size);

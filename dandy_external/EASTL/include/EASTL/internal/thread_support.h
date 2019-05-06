@@ -13,7 +13,8 @@
 #endif
 #include <EASTL/internal/config.h>
 
-#if defined(EA_HAVE_CPP11_MUTEX) && !defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_UNIX) // We stick with platform-specific mutex support to the extent possible, as it's currently more reliably available.
+// #if defined(EA_HAVE_CPP11_MUTEX) && !defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_UNIX) // We stick with platform-specific mutex support to the extent possible, as it's currently more reliably available.
+#if defined(EA_HAVE_CPP11_MUTEX) && !defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_UNIX) && !defined(D_PLATFORM_MBED) // We stick with platform-specific mutex support to the extent possible, as it's currently more reliably available.
 	#define EASTL_CPP11_MUTEX_ENABLED 1
 #else
 	#define EASTL_CPP11_MUTEX_ENABLED 0

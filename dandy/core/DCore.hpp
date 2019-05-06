@@ -47,6 +47,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
+#include <string>
 #include <dandy/core/DPlatform.hpp>
 #include <EABase/eabase.h>
 #include <EABase/nullptr.h>

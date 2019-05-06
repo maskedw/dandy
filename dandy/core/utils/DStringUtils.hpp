@@ -48,7 +48,7 @@
 class DStringUtils
 {
 public:
-    static std::string format(const char* fmt, ...);
+    static std::string format(const char* fmt, ...) X_PRINTF_ATTR(1, 2);
     static std::string vformat(const char* fmt, va_list args);
 };
 

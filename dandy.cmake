@@ -3,6 +3,7 @@ set(rootdir ${CMAKE_CURRENT_LIST_DIR})
 include_directories(
     ${rootdir}
     ${rootdir}/dandy_config
+    ${rootdir}/dandy_external
     ${rootdir}/dandy_external/EASTL/include
     ${rootdir}/dandy_external/EASTL/test/packages/EABase/include/Common
 )
@@ -24,4 +25,5 @@ set(dandy_sources
     ${rootdir}/dandy/core/stream/DFILEStream.cpp
     ${rootdir}/dandy/drivers/i2c/DI2C.cpp
     ${rootdir}/dandy/drivers/i2c/DMbedI2C.cpp
+    ${rootdir}/dandy_external/linenoise/linenoise.c
 )

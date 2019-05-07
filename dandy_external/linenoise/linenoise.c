@@ -103,7 +103,9 @@
  *
  */
 
-#include <termios.h>
+#ifndef __MBED__
+    #include <termios.h>
+#endif
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -111,20 +113,36 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
+
+#ifndef __MBED__
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <sys/ioctl.h>
+    #include <unistd.h>
+#endif
 #include "linenoise.h"
 
-#define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 4096
+#ifdef __MBED__
+    struct winsize
+    {
+        int ws_col;
+    };
+    #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 10
+    #define LINENOISE_MAX_LINE 256
+#else
+    #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
+    #define LINENOISE_MAX_LINE 4096
+#endif
+
+
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
 static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
 
-static struct termios orig_termios; /* In order to restore at exit.*/
+#ifndef __MBED__
+    static struct termios orig_termios; /* In order to restore at exit.*/
+#endif
 static int rawmode = 0; /* For atexit() function to check if restore is needed*/
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
 static int atexit_registered = 0; /* Register atexit just 1 time. */
@@ -162,7 +180,11 @@ enum KEY_ACTION{
 	TAB = 9,            /* Tab */
 	CTRL_K = 11,        /* Ctrl+k */
 	CTRL_L = 12,        /* Ctrl+l */
+#ifdef __MBED__
+	ENTER = 10,         /* Enter */
+#else
 	ENTER = 13,         /* Enter */
+#endif
 	CTRL_N = 14,        /* Ctrl-n */
 	CTRL_P = 16,        /* Ctrl-p */
 	CTRL_T = 20,        /* Ctrl-t */
@@ -216,6 +238,7 @@ static int isUnsupportedTerm(void) {
 
 /* Raw mode: 1960 magic shit. */
 static int enableRawMode(int fd) {
+#ifndef __MBED__
     struct termios raw;
 
     if (!isatty(STDIN_FILENO)) goto fatal;
@@ -242,6 +265,7 @@ static int enableRawMode(int fd) {
 
     /* put terminal in raw mode after flushing */
     if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) goto fatal;
+#endif
     rawmode = 1;
     return 0;
 
@@ -251,8 +275,10 @@ fatal:
 }
 
 static void disableRawMode(int fd) {
+#ifndef __MBED__
     /* Don't even check the return value as it's too late. */
     if (rawmode && tcsetattr(fd,TCSAFLUSH,&orig_termios) != -1)
+#endif
         rawmode = 0;
 }
 
@@ -286,7 +312,12 @@ static int getCursorPosition(int ifd, int ofd) {
 static int getColumns(int ifd, int ofd) {
     struct winsize ws;
 
+#ifdef __MBED__
+    ws.ws_col = 100;
+    if (1) {
+#else
     if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+#endif
         /* ioctl() failed. Try to query the terminal itself. */
         int start, cols;
 
@@ -1041,6 +1072,7 @@ char *linenoise(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
     int count;
 
+#ifndef __MBED__
     if (!isatty(STDIN_FILENO)) {
         /* Not a tty: read from file / pipe. In this mode we don't want any
          * limit to the line size, so we call a function to handle that. */
@@ -1058,6 +1090,9 @@ char *linenoise(const char *prompt) {
         }
         return strdup(buf);
     } else {
+#else
+     if (1) {
+#endif
         count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
         if (count == -1) return NULL;
         return strdup(buf);
@@ -1163,14 +1198,20 @@ int linenoiseHistorySetMaxLen(int len) {
 /* Save the history in the specified file. On success 0 is returned
  * otherwise -1 is returned. */
 int linenoiseHistorySave(const char *filename) {
+#ifndef __MBED__
     mode_t old_umask = umask(S_IXUSR|S_IRWXG|S_IRWXO);
+#endif
     FILE *fp;
     int j;
 
     fp = fopen(filename,"w");
+#ifndef __MBED__
     umask(old_umask);
+#endif
     if (fp == NULL) return -1;
+#ifndef __MBED__
     chmod(filename,S_IRUSR|S_IWUSR);
+#endif
     for (j = 0; j < history_len; j++)
         fprintf(fp,"%s\n",history[j]);
     fclose(fp);

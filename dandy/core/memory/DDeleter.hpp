@@ -71,4 +71,13 @@ struct DFileDeleter
     }
 };
 
+struct DDirDeleter
+{
+    void operator()(DIR* dir) const
+    {
+        if (dir)
+            ::closedir(dir);
+    }
+};
+
 #endif /* end of include guard: dandy_DDeleter_hpp_ */

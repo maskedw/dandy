@@ -48,6 +48,10 @@ class DStream : public FileHandle
 {
 public:
     DStream() {}
+    virtual int close() override { return 0; }
+    virtual ssize_t read(void *buffer, size_t size) override { return -ENOSYS; }
+    virtual ssize_t write(const void *buffer, size_t size) override { return -ENOSYS; }
+
     int putc(int c)
     {
         const uint8_t b = c;
@@ -61,7 +65,7 @@ public:
         const ssize_t result = this->read(&b, 1);
         return result == 1 ? b : EOF;
     }
-    virtual int close() override { return 0; }
+
     int printf(const char *format, ...) X_PRINTF_ATTR(2, 3);
     int vprintf(const char *format, std::va_list args);
     char* gets(char* dst, size_t size, bool* overflow);

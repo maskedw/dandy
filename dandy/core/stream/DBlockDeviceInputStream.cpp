@@ -56,8 +56,6 @@ DBlockDeviceInputStream::DBlockDeviceInputStream(BlockDevice* blockDevice,
     , m_cacheIndex(0)
     , m_cached(false)
 {
-    // X_ASSERT(x_is_within(beginAddress + size, 0, SST25_ADDER_END) + 1);
-
     X_ASSERT(m_size > 0);
     X_ASSERT(m_cacheSize > 0);
     if (m_cacheSize > m_size)

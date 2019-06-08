@@ -42,7 +42,54 @@
 #include <picox/misc/xargparser.h>
 
 
-// DShell* self;
+class DShellLinenoiseCallbackHelper
+{
+public:
+    static void CompletionCallback(linenoiseState* l, const char* buf, linenoiseCompletions* lc)
+    {
+        DShell* shell = static_cast<DShell*>(l->userPtr);
+        const size_t bufLen = ::strlen(buf);
+
+        if (buf[0] == 'c')
+            linenoiseAddCompletion(l, lc, "clear");
+        else if (buf[0] == 'e')
+            linenoiseAddCompletion(l, lc, "exit");
+
+        D_CONST_FOREACH(DShell::DShellCommandMap::const_iterator, it, shell->m_commands)
+        {
+            if (::strncmp(buf, it->first.c_str(), bufLen) == 0)
+                linenoiseAddCompletion(l, lc, it->first.c_str());
+        }
+    }
+
+    static char* HintsCallback(linenoiseState* l, const char* buf, int* color, int* bold)
+    {
+        X_UNUSED(l);
+        X_UNUSED(buf);
+        X_UNUSED(color);
+        X_UNUSED(bold);
+
+        return NULL;
+    }
+
+    static void FreeHintsCallback(linenoiseState* l, void* ptr)
+    {
+        X_UNUSED(l);
+        X_UNUSED(ptr);
+    }
+
+    static ssize_t ReadCallback(linenoiseState* l, void* dst, size_t n)
+    {
+        DShell* shell = static_cast<DShell*>(l->userPtr);
+        return shell->m_stdIn->read(dst, n);
+    }
+
+    static ssize_t WriteCallback(linenoiseState* l, const void* src, size_t n)
+    {
+        DShell* shell = static_cast<DShell*>(l->userPtr);
+        return shell->m_stdOut->write(src, n);
+    }
+};
 
 
 int DShellCommand_hello(const DShellCommandContext* ctx)
@@ -55,13 +102,15 @@ int DShellCommand_hello(const DShellCommandContext* ctx)
     return 0;
 }
 
-
-// static void completion(const char *buf, linenoiseCompletions *lc) {
-//     if (buf[0] == 'h') {
-//         linenoiseAddCompletion(lc,"hello");
-//         linenoiseAddCompletion(lc,"hello there");
-//     }
-// }
+DShell::DShell()
+    : m_stdOut(nullptr)
+    , m_stdIn(nullptr)
+    , m_stdErr(nullptr)
+    , m_maxHistory(20)
+    , m_maxLine(256)
+    , m_maxArgc(16)
+{
+}
 
 
 void DShell::install(const char* name, DShellCommand command)
@@ -70,58 +119,101 @@ void DShell::install(const char* name, DShellCommand command)
 }
 
 
-void DShell::start()
+void DShell::start(const char* prompt, DStream* stdOut, DStream* stdIn, DStream* stdErr)
 {
+    X_ASSERT(stdOut);
+
+    m_stdOut = stdOut;
+    m_stdIn = stdIn ? stdIn : stdOut;
+    m_stdErr = stdErr ? stdErr : stdOut;
+
     this->install("hello", callback(DShellCommand_hello));
-    linenoiseSetMultiLine(0);
-    // self = this;
-    // linenoiseSetCompletionCallback(completion);
-    char *line;
 
-    while((line = linenoise("hello> ")) != NULL) {
-        /* Do something with the string. */
-        if (line[0] != '\0' && line[0] != '/') {
-            linenoiseHistoryAdd(line); /* Add to the history. */
-            // linenoiseHistorySave("history.txt"); /* Save the history on disk. */
+    linenoiseState l;
+    linenoiseInit(&l);
+    l.userPtr = this;
+    l.write = DShellLinenoiseCallbackHelper::WriteCallback;
+    l.read = DShellLinenoiseCallbackHelper::ReadCallback;
+    l.max_line = m_maxLine;
+    linenoiseSetMultiLine(&l, 0);
+    linenoiseSetCompletionCallback(&l, DShellLinenoiseCallbackHelper::CompletionCallback);
+    linenoiseSetHintsCallback(&l, DShellLinenoiseCallbackHelper::HintsCallback);
+    linenoiseSetFreeHintsCallback(&l, DShellLinenoiseCallbackHelper::FreeHintsCallback);
+    linenoiseHistorySetMaxLen(&l, m_maxHistory);
 
-            int argc;
-            char* argv[16];
-            const XArgParserErr err = xargparser_to_argv(line, &argc, argv, 16);
-            if (err != X_ARG_PARSER_ERR_NONE)
-            {
-                X_LOG_WARN(("Shell", "Command parse error: %d", err));
-            }
-            else
-            {
-                const char* commandName = argv[0];
-                DShellCommandMap::const_iterator item = m_commands.find(commandName);
-                if (item == m_commands.end())
-                {
-                    printf("%s not found\n", commandName);
-                }
-                else
-                {
-                    DShellCommandContext ctx;
-                    ctx.argc = argc;
-                    ctx.argv = argv;
-                    const DShellCommand command = item->second;
-                    command.call(&ctx);
-                }
-            }
-        } else if (!strncmp(line,"/historylen",11)) {
-            /* The "/historylen" command will change the history len. */
-            int len = atoi(line+11);
-            linenoiseHistorySetMaxLen(len);
-        } else if (line[0] == '/') {
-            printf("Unreconized command: %s\n", line);
+    char *line = nullptr;
+    int argc;
+    char** argv = D_NEW(char*[m_maxArgc + 1]);
+    X_ASSERT(argv);
+
+    for (;;)
+    {
+        linenoiseFree(&l, line);
+        line = nullptr;
+        line = linenoise(&l, prompt);
+        if (!line)
+            break;
+
+        line = x_strrstrip(line, nullptr);
+        if (line[0] == '\0')
+            continue;
+
+        linenoiseHistoryAdd(&l, line);
+
+        const XArgParserErr err = xargparser_to_argv(line, &argc, argv, m_maxArgc);
+        if (err != X_ARG_PARSER_ERR_NONE)
+        {
+            m_stdErr->printf("dsh: command line parsing failed\n");
+            continue;
         }
-        free(line);
+
+        argv[argc] = nullptr;
+        const char* commandName = argv[0];
+
+        if (::strcmp(commandName, "clear") == 0)
+        {
+            linenoiseClearScreen(&l);
+        }
+        else if (::strcmp(commandName, "exit") == 0)
+        {
+            m_stdErr->printf("dsh: bye\n");
+            break;
+        }
+        else
+        {
+            DShellCommandMap::const_iterator item = m_commands.find(commandName);
+            if (item == m_commands.end())
+            {
+                m_stdErr->printf("dsh: command not found '%s'\n", commandName);
+                continue;
+            }
+
+            DShellCommandContext ctx;
+            ctx.argc = argc;
+            ctx.argv = argv;
+            ctx.stdOut = m_stdOut;
+            ctx.stdIn = m_stdIn;
+            ctx.stdErr = m_stdErr;
+            const DShellCommand command = item->second;
+            command.call(&ctx);
+        }
     }
+
+    D_DELETE_ARRAY(argv);
+    linenoiseFreeHistory(&l);
 }
 
-
-void DShell::stop()
+void DShell::setMaxHistory(int maxHistory)
 {
-    X_LOG_WARN(("Shell", "Not implemented yet"));
+    m_maxHistory = maxHistory;
+}
 
+void DShell::setMaxLine(size_t maxLine)
+{
+    m_maxLine = maxLine;
+}
+
+void DShell::setMaxArgc(size_t maxArgc)
+{
+    m_maxArgc = maxArgc;
 }

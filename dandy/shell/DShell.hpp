@@ -41,7 +41,7 @@
 #define dandy_DShell_hpp_
 
 
-#include <dandy/core/DCore.hpp>
+#include <dandy/core/stream/DStream.hpp>
 #include <map>
 
 
@@ -49,10 +49,9 @@ struct DShellCommandContext
 {
     int         argc;
     char**      argv;
-    // DStream*    stdOut;
-    // DStream*    stdErr;
-    // DStream*    stdIn;
-    // DEnviroment* env;
+    DStream*    stdOut;
+    DStream*    stdErr;
+    DStream*    stdIn;
 };
 
 typedef Callback<int (const DShellCommandContext*)> DShellCommand;
@@ -60,14 +59,27 @@ typedef Callback<int (const DShellCommandContext*)> DShellCommand;
 class DShell
 {
 public:
+    DShell();
     void install(const char* name, DShellCommand command);
-    void start();
-    void stop();
+    void installBuiltinCommands();
+    void start(const char* prompt, DStream* stdOut, DStream* stdIn = nullptr, DStream* stdErr = nullptr);
+    void setMaxHistory(int maxHistory);
+    void setMaxLine(size_t maxLine);
+    void setMaxArgc(size_t maxArgc);
 
 private:
     typedef std::map<std::string, DShellCommand> DShellCommandMap;
 
     DShellCommandMap m_commands;
+    DStream* m_stdOut;
+    DStream* m_stdIn;
+    DStream* m_stdErr;
+    int m_maxHistory;
+    size_t m_maxLine;
+    size_t m_maxArgc;
+
+    friend class DShellLinenoiseCallbackHelper;
+
 };
 
 #endif /* end of include guard: dandy_DShell_hpp_ */

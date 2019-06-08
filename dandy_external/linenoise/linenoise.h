@@ -48,23 +48,60 @@ typedef struct linenoiseCompletions {
   char **cvec;
 } linenoiseCompletions;
 
-typedef void(linenoiseCompletionCallback)(const char *, linenoiseCompletions *);
-typedef char*(linenoiseHintsCallback)(const char *, int *color, int *bold);
-typedef void(linenoiseFreeHintsCallback)(void *);
-void linenoiseSetCompletionCallback(linenoiseCompletionCallback *);
-void linenoiseSetHintsCallback(linenoiseHintsCallback *);
-void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *);
-void linenoiseAddCompletion(linenoiseCompletions *, const char *);
+struct linenoiseState;
 
-char *linenoise(const char *prompt);
-void linenoiseFree(void *ptr);
-int linenoiseHistoryAdd(const char *line);
-int linenoiseHistorySetMaxLen(int len);
-int linenoiseHistorySave(const char *filename);
-int linenoiseHistoryLoad(const char *filename);
-void linenoiseClearScreen(void);
-void linenoiseSetMultiLine(int ml);
-void linenoisePrintKeyCodes(void);
+typedef ssize_t (*linenoiseWriteFunc)(struct linenoiseState*, const void*, size_t);
+typedef ssize_t (*linenoiseReadFunc)(struct linenoiseState*, void*, size_t);
+typedef void(linenoiseCompletionCallback)(struct linenoiseState*, const char *, linenoiseCompletions *);
+typedef char*(linenoiseHintsCallback)(struct linenoiseState*, const char *, int *color, int *bold);
+typedef void(linenoiseFreeHintsCallback)(struct linenoiseState*, void *);
+
+
+/* The linenoiseState structure represents the state during line editing.
+ * We pass this state to functions implementing specific editing
+ * functionalities. */
+struct linenoiseState {
+    linenoiseWriteFunc write;
+    linenoiseReadFunc read;
+    void* userPtr;
+    char *buf;          /* Edited line buffer. */
+    size_t buflen;      /* Edited line buffer size. */
+    const char *prompt; /* Prompt to display. */
+    size_t plen;        /* Prompt length. */
+    size_t pos;         /* Current cursor position. */
+    size_t oldpos;      /* Previous refresh cursor position. */
+    size_t len;         /* Current edited line length. */
+    size_t cols;        /* Number of columns in terminal. */
+    size_t maxrows;     /* Maximum num of rows used so far (multiline mode) */
+    int history_index;  /* The history index we are currently editing. */
+    int mlmode;
+    int history_max_len;
+    int history_len;
+    char **history;
+    linenoiseCompletionCallback* completionCallback;
+    linenoiseHintsCallback* hintsCallback;
+    linenoiseFreeHintsCallback* freeHintsCallback;
+    size_t max_line;
+};
+typedef struct linenoiseState linenoiseState;
+
+
+void linenoiseSetCompletionCallback(linenoiseState* self, linenoiseCompletionCallback *);
+void linenoiseSetHintsCallback(linenoiseState* self, linenoiseHintsCallback *);
+void linenoiseSetFreeHintsCallback(linenoiseState* self, linenoiseFreeHintsCallback *);
+void linenoiseAddCompletion(linenoiseState* self, linenoiseCompletions *, const char *);
+
+void linenoiseInit(linenoiseState* self);
+char *linenoise(linenoiseState* self, const char *prompt);
+void linenoiseFree(linenoiseState* self, void *ptr);
+int linenoiseHistoryAdd(linenoiseState* self, const char *line);
+int linenoiseHistorySetMaxLen(linenoiseState* self, int len);
+int linenoiseHistorySave(linenoiseState* self, const char *filename);
+int linenoiseHistoryLoad(linenoiseState* self, const char *filename);
+void linenoiseClearScreen(linenoiseState* self);
+void linenoiseSetMultiLine(linenoiseState* self, int ml);
+void linenoiseFreeHistory(linenoiseState* self);
+
 
 #ifdef __cplusplus
 }

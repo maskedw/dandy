@@ -91,17 +91,6 @@ public:
     }
 };
 
-
-int DShellCommand_hello(const DShellCommandContext* ctx)
-{
-    printf("Hello World\n");
-    for (int i = 0; i < ctx->argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, ctx->argv[i]);
-    }
-    return 0;
-}
-
 DShell::DShell()
     : m_stdOut(nullptr)
     , m_stdIn(nullptr)
@@ -112,12 +101,10 @@ DShell::DShell()
 {
 }
 
-
 void DShell::install(const char* name, DShellCommand command)
 {
     m_commands.insert(std::make_pair(name, command));
 }
-
 
 void DShell::start(const char* prompt, DStream* stdOut, DStream* stdIn, DStream* stdErr)
 {
@@ -126,8 +113,6 @@ void DShell::start(const char* prompt, DStream* stdOut, DStream* stdIn, DStream*
     m_stdOut = stdOut;
     m_stdIn = stdIn ? stdIn : stdOut;
     m_stdErr = stdErr ? stdErr : stdOut;
-
-    this->install("hello", callback(DShellCommand_hello));
 
     linenoiseState l;
     linenoiseInit(&l);

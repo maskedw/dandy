@@ -42,6 +42,7 @@
 #if defined(__MBED__)
     #define D_PLATFORM_MBED 1
     #include <mbed.h>
+    #include <BlockDevice.h>
 #else
     #error Unsupported platform
 #endif

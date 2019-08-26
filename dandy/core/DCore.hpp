@@ -132,34 +132,34 @@
  *  スする必要があったり、配列には使えなかったりと不便はありますが、その分実装が
  *  超シンプルですみますし、機能もまあこれで十分でしょう。
  */
-#define D_FOREACH(IteratorType, ite, container)        \
-            for (IteratorType ite = container.begin(), \
-                              end = container.end();   \
-                              ite != end;              \
+#define D_FOREACH(IteratorType, ite, container)          \
+            for (IteratorType ite = (container).begin(), \
+                              end = (container).end();   \
+                              ite != end;                \
                               ++ite)
 
 /** 逆走査版 D_FOREACH()です。
  */
-#define D_RFOREACH(IteratorType, ite, container)        \
-            for (IteratorType ite = container.rbegin(), \
-                              end = container.rend();   \
-                              ite != end;               \
+#define D_RFOREACH(IteratorType, ite, container)          \
+            for (IteratorType ite = (container).rbegin(), \
+                              end = (container).rend();   \
+                              ite != end;                 \
                               ++ite)
 
 /** const版 D_FOREACHです
  */
-#define D_CONST_FOREACH(IteratorType, ite, container)   \
-            for (IteratorType ite = container.cbegin(), \
-                              end = container.cend();   \
-                              ite != end;               \
+#define D_CONST_FOREACH(IteratorType, ite, container)     \
+            for (IteratorType ite = (container).cbegin(), \
+                              end = (container).cend();   \
+                              ite != end;                 \
                               ++ite)
 
 /** const版 D_RFOREACHです
  */
-#define D_CONST_RFOREACH(IteratorType, ite, container)   \
-            for (IteratorType ite = container.crbegin(), \
-                              end = container.crend();   \
-                              ite != end;                \
+#define D_CONST_RFOREACH(IteratorType, ite, container)    \
+            for (IteratorType ite = (container).crbegin(), \
+                              end = (container).crend();   \
+                              ite != end;                  \
                               ++ite)
 /// @cond IGNORE
 namespace dandy_detail {

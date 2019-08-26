@@ -54,18 +54,18 @@ public:
     /**
     *   Constructor
     *
+    * @param connect_blocking define if the connection must be blocked if USB not plugged in
     * @param vendor_id Your vendor_id (default: 0x1f00)
     * @param product_id Your product_id (default: 0x2012)
     * @param product_release Your preoduct_release (default: 0x0001)
-    * @param connect_blocking define if the connection must be blocked if USB not plugged in
     *
     */
-    DUSBSerial(size_t rx_buffer_size, uint16_t vendor_id = 0x1f00, uint16_t product_id = 0x2012, uint16_t product_release = 0x0001, bool connect_blocking = true): USBCDC(vendor_id, product_id, product_release, connect_blocking){
-        settingsChangedCallback = 0;
-        m_blocking = false;
-        xfifo_init(&m_rxFifo, nullptr, rx_buffer_size, nullptr);
-    };
-
+    DUSBSerial(size_t rx_buffer_size,
+               bool connect_blocking = true,
+               uint16_t vendor_id = 0x1f00,
+               uint16_t product_id = 0x2012,
+               uint16_t product_release = 0x0001);
+    virtual ~DUSBSerial() override;
 
     virtual ssize_t read(void *dst, size_t size) override;
     virtual ssize_t write(const void *buffer, size_t size) override;
@@ -129,25 +129,10 @@ public:
     */
     bool writeBlock(const uint8_t * buf, uint16_t size);
 
-    /**
-     * Attach a callback to call when serial's settings are changed.
-     *
-     * @param fptr function pointer
-     */
-    void attach(void (*fptr)(int baud, int bits, int parity, int stop)) {
-        settingsChangedCallback = fptr;
-    }
-
 protected:
-    virtual bool EPBULK_OUT_callback();
-    virtual void lineCodingChanged(int baud, int bits, int parity, int stop){
-        if (settingsChangedCallback) {
-            settingsChangedCallback(baud, bits, parity, stop);
-        }
-    }
+    virtual void data_rx() override;
 
 private:
-    void (*settingsChangedCallback)(int baud, int bits, int parity, int stop);
 
     XFifoBuffer m_rxFifo;
     bool m_blocking;

@@ -41,16 +41,22 @@
 #include <dandy/drivers/usb/DUSBSerial.hpp>
 
 
-bool DUSBSerial::writeBlock(const uint8_t * buf, uint16_t size) {
-    if(size > MAX_PACKET_SIZE_EPBULK) {
-        return false;
-    }
-    if(!send(const_cast<uint8_t*>(buf), size)) {
-        return false;
-    }
-    return true;
+DUSBSerial::DUSBSerial(
+        size_t rx_buffer_size,
+        bool connect_blocking,
+        uint16_t vendor_id,
+        uint16_t product_id,
+        uint16_t product_release)
+    : USBCDC(connect_blocking, vendor_id, product_id, product_release)
+    , m_blocking(false)
+{
+    xfifo_init(&m_rxFifo, nullptr, rx_buffer_size, nullptr);
 }
 
+DUSBSerial::~DUSBSerial()
+{
+    xfifo_deinit(&m_rxFifo);
+}
 
 ssize_t DUSBSerial::read(void *dst, size_t size)
 {
@@ -69,20 +75,8 @@ ssize_t DUSBSerial::read(void *dst, size_t size)
 
 ssize_t DUSBSerial::write(const void *buffer, size_t size)
 {
-    const uint8_t* p = static_cast<const uint8_t*>(buffer);
-    size_t remain = size;
-    while (remain)
-    {
-        /* ちょっとずつ送信しないとデータが壊れる・・・。原因不明 */
-        const size_t MAX_SIZE = 1;
-        const size_t to_write = size <= MAX_SIZE ? remain : MAX_SIZE;
-        if (!this->writeBlock(p, to_write))
-            return -EIO;
-        p += to_write;
-        remain -= to_write;
-    }
-
-    return size;
+    const bool ok = this->send(static_cast<uint8_t*>(const_cast<void*>(buffer)), size);
+    return ok ? size : -EIO;
 }
 
 
@@ -92,19 +86,15 @@ off_t DUSBSerial::seek(off_t offset, int whence)
 }
 
 
-bool DUSBSerial::EPBULK_OUT_callback() {
-    uint8_t c[65];
-    uint32_t size = 0;
+void DUSBSerial::data_rx()
+{
+     uint8_t c[64];
+     uint32_t byteRead = 0;
 
-    //we read the packet received and put it on the circular buffer
-    readEP(c, &size);
-    X_ASSERT(xfifo_reserve(&m_rxFifo) >= size);
-
-    xfifo_push_back_n(&m_rxFifo, c, size);
-
-    return true;
+     this->receive(c, sizeof(c), &byteRead);
+     X_ASSERT(xfifo_reserve(&m_rxFifo) >= byteRead);
+     xfifo_push_back_n(&m_rxFifo, c, byteRead);
 }
-
 
 size_t DUSBSerial::available() {
     return xfifo_size(&m_rxFifo);
@@ -112,7 +102,7 @@ size_t DUSBSerial::available() {
 
 
 bool DUSBSerial::connected() {
-    return terminal_connected;
+    return _terminal_connected;
 }
 
 

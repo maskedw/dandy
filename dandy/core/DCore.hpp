@@ -241,4 +241,49 @@ union DMaxAlign
     TypeName(const TypeName &);              \
     TypeName &operator =(const TypeName &)
 
+
+/** QtのQ_DECLARE_PRIVATE()と同じです
+ *  @see https://wiki.qt.io/D-Pointer
+ */
+#define D_DECLARE_PRIVATE(ClassName)                                        \
+    inline ClassName##Private* d_func()                                     \
+    {                                                                       \
+        return reinterpret_cast<ClassName##Private*>(d_ptr);                \
+    }                                                                       \
+    inline const ClassName##Private* d_func() const                         \
+    {                                                                       \
+        return reinterpret_cast<const ClassName##Private*>(d_ptr);          \
+    }                                                                       \
+    friend class        ClassName##Private;                                 \
+    ClassName##Private* d_ptr;
+
+
+/** QtのQ_DECLARE_PUBLIC()と同じです
+ *  @see https://wiki.qt.io/D-Pointer
+ */
+#define D_DECLARE_PUBLIC(ClassName)                                         \
+    inline ClassName* q_func()                                              \
+    {                                                                       \
+        return reinterpret_cast<ClassName*>(q_ptr);                         \
+    }                                                                       \
+    inline const ClassName* q_func() const                                  \
+    {                                                                       \
+        return reinterpret_cast<const ClassName*>(q_ptr);                   \
+    }                                                                       \
+    friend class    ClassName;                                              \
+    ClassName*      q_ptr;
+
+
+/** QtのQ_D()と同じです
+ *  @see https://wiki.qt.io/D-Pointer
+ */
+#define D_D(ClassName) ClassName##Private* const d = d_func()
+
+
+/** QtのQ_Q()と同じです
+ *  @see https://wiki.qt.io/D-Pointer
+ */
+#define D_Q(ClassName) ClassName* const q = q_func()
+
+
 #endif /* end of include guard: dandy_DCore_hpp_ */
